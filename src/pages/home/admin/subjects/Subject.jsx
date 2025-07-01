@@ -71,55 +71,57 @@ const EditSubject = () => {
 
         <h1 className="text-3xl text-main mb-6">Edit Subject</h1>
 
-        <div className="grid grid-cols-2 items-center justify-center">
-          <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
-            <label className="text-white font-semibold mb-1">Subject ID</label>
-            <input
-              type="text"
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-              className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
-              placeholder="e.g. CS_101"
-            />
-          </div>
+        <div className="w-full flex items-center justify-center">
+          <div className="grid grid-cols-2 gap-4 w-1/2 mb-4">
+            <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
+              <label className="text-white font-semibold mb-1">Subject ID</label>
+              <input
+                type="text"
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
+                placeholder="e.g. CS_101"
+              />
+            </div>
 
-          <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
-            <label className="text-white font-semibold mb-1">Name</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
-              placeholder="e.g. Computer Science"
-            />
-          </div>
+            <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
+              <label className="text-white font-semibold mb-1">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
+                placeholder="e.g. Computer Science"
+              />
+            </div>
 
-          <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
-            <label className="text-white font-semibold mb-1">Description</label>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={4}
-              className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
-              placeholder="Enter a short description"
-            />
-          </div>
+            <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
+              <label className="text-white font-semibold mb-1">Description</label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={4}
+                className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
+                placeholder="Enter a short description"
+              />
+            </div>
 
-          <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
-            <label className="text-white font-semibold mb-1">Image</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => setImage(e.target.files[0])}
-              className="mt-2 text-blk bg-white p-2 rounded text-sm hover:cursor-pointer w-full h-20"
-            />
+            <div className="flex flex-col bg-main p-4 rounded-lg shadow-md w-64">
+              <label className="text-white font-semibold mb-1">Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0])}
+                className="mt-2 text-blk bg-white p-2 rounded text-sm hover:cursor-pointer w-full h-20"
+              />
+            </div>
           </div>
         </div>
 
         <div className="w-full flex items-center justify-center">
           <button
             onClick={() => navigate("/admin/subjects")}
-            className="bg-red-500 hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md transition hover:cursor-pointer"
+            className="bg-red-500 hover:bg-red-700 text-white px-6 py-2 rounded-md shadow-md transition hover:cursor-pointer mr-4"
           >
             Cancel
           </button>
