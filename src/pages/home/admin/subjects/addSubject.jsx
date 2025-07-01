@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 import Sidebar from "../../../components/sidebar";
 import back from '../../../../assets/back.svg';
@@ -7,136 +8,126 @@ import back from '../../../../assets/back.svg';
 const AddSubject = () => {
   const navigate = useNavigate();
 
-  const toggleOption = (option) => {
-    setSelectedOptions((prev) =>
-      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option]
-    );
+  const [subjectId, setSubjectId] = useState("");
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+  const [image, setImage] = useState(null);
+
+  const handleSubmit = async () => {
+    if (!subjectId || !name || !description || !image) {
+      toast.error("All fields are required");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("subject_id", subjectId);
+    formData.append("name", name);
+    formData.append("description", description);
+    formData.append("image", image);
+
+    const token = localStorage.getItem("adminToken");
+
+    const toastId = toast.loading("Submitting...");
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/subjects`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const result = await res.json();
+        throw new Error(result.message || "Failed to add subject");
+      }
+
+      toast.success("Subject added successfully", { id: toastId });
+      localStorage.removeItem("subjects_cache");
+      navigate("/admin/subjects");
+    } catch (err) {
+      toast.error(err.message || "Error adding subject", { id: toastId });
+    }
   };
 
-  return(
+  return (
     <div className="w-screen h-screen flex bg-white">
-      <Sidebar 
-        userType={"admin"}
-      />
+      <Sidebar userType={"admin"} />
 
       <div className="w-4/5 flex flex-col p-4 text-blk">
         <button
           className="w-60 hover:cursor-pointer flex items-center justify-between p-2 hover:underline"
-          onClick={() => navigate("/admin/subjects")} // Navigate back to the users page
+          onClick={() => navigate("/admin/subjects")}
         >
-          <img src={back} className="w-5 h-5"/><p className="text-xl text-main">Back to all subjects</p>
+          <img src={back} className="w-5 h-5" /><p className="text-xl text-main">Back to all subjects</p>
         </button>
         <h1 className="text-3xl text-main mb-4 pl-4">Add Subject</h1>
 
         <div>
-          <div className="flex p-4 items-center justify-center">
-            <div className="flex p-4 items-center justify-center">
-              <div className="m-4 bg-main p-4 rounded-lg shadow-md">
-                <label htmlFor="inputname" className="block text-white font-semibold text-sm">
-                  Subject ID
-                </label>
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    name="inputname"
-                    placeholder="CS101"
-                    className="block w-56 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
-                  />
-                </div>
-              </div>
-              <div className="m-4 bg-main p-4 rounded-lg shadow-md">
-                <label htmlFor="inputname" className="block text-white font-semibold text-sm">
-                  Subject Name
-                </label>
-                <div className="mt-2">
-                  <input
-                    type="text"
-                    name="inputname"
-                    placeholder="Computer Science"
-                    className="block w-56 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
-                  />
-                </div>
-              </div>
+          <div className="grid grid-cols-2 p-4">
+            <div className="m-4 bg-main p-4 rounded-lg shadow-md">
+              <label className="block text-white font-semibold text-sm">Subject ID</label>
+              <input
+                type="text"
+                placeholder="CS101"
+                value={subjectId}
+                onChange={(e) => setSubjectId(e.target.value)}
+                className="mt-2 block w-56 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
+              />
             </div>
 
-          </div>
-
-          <div className="flex items-center justify-center p-4">
-            <div className="bg-main w-1/4 mr-4 p-4 rounded-lg shadow-md">
-              <label htmlFor="cars" className="text-white font-semibold mb-2 block">
-                Grade
-              </label>
-              <select
-                name="cars"
-                id="cars"
-                className="w-full p-2 rounded-md border border-main2 bg-white text-blk focus:outline-none focus:ring-2 focus:ring-main2"
-              >
-                <option value="volvo">Grade 10</option>
-                <option value="saab">Grade 11</option>
-                <option value="mercedes">Grade 12</option>
-              </select>
+            <div className="m-4 bg-main p-4 rounded-lg shadow-md">
+              <label className="block text-white font-semibold text-sm">Subject Name</label>
+              <input
+                type="text"
+                placeholder="Computer Science"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-2 block w-56 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
+              />
             </div>
 
-            <MultiSelectDropdown label="Classes" options={["1A", "1B", "2A", "2B", "3A", "3B"]} />
-            <MultiSelectDropdown label="Teachers" options={["Mohamed Emad", "Jane Smith", "John Doe"]} />
+            <div className="m-4 bg-main p-4 rounded-lg shadow-md">
+              <label className="block text-white font-semibold text-sm">Description</label>
+              <textarea
+                placeholder="Short description"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="mt-2 block w-full h-20 rounded-md py-1.5 px-2 bg-white text-blk focus:ring-2 focus:ring-main2 focus:outline-none shadow-sm"
+              />
+            </div>
 
+            <div className="m-4 bg-main p-4 rounded-lg shadow-md">
+              <label className="block text-white font-semibold text-sm">Image</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => setImage(e.target.files[0])}
+                className="mt-2 bg-white p-2 rounded text-sm hover:cursor-pointer w-full h-20"
+              />
+            </div>
           </div>
+
           <div className="flex items-center justify-center p-4">
             <div className="mr-4">
-              <button className="w-20 bg-main hover:bg-main2 hover:cursor-pointer text-white px-2 py-1 rounded-md shadow-md transition-colors">
-                Save
-              </button>
-            </div>
-            <div>
-              <button className="w-20 bg-red-500 hover:bg-red-700 hover:cursor-pointer text-white px-2 py-1 rounded-md shadow-md transition-colors">
+              <button
+                onClick={() => navigate("/admin/subjects")}
+                className="w-20 bg-red-500 hover:bg-red-700 hover:cursor-pointer text-white px-2 py-1 rounded-md shadow-md transition-colors"
+              >
                 Cancel
               </button>
             </div>
+            <div>
+              <button
+                onClick={handleSubmit}
+                className="w-20 bg-main hover:bg-main2 hover:cursor-pointer text-white px-2 py-1 rounded-md shadow-md transition-colors"
+              >
+                Save
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-const MultiSelectDropdown = ({ options, label }) => {
-  const [selectedOptions, setSelectedOptions] = useState([]);
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleOption = (option) => {
-    setSelectedOptions((prev) =>
-      prev.includes(option) ? prev.filter((o) => o !== option) : [...prev, option]
-    );
-  };
-
-  return (
-    <div className="relative bg-main w-1/4 p-4 rounded-lg shadow-md mr-4">
-      <label className="text-white font-semibold mb-2 block">{label}</label>
-      <div
-        className="w-full p-2 rounded-md border border-main2 bg-white text-blk focus:outline-none focus:ring-2 focus:ring-main2 cursor-pointer"
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        {selectedOptions.length > 0 ? selectedOptions.join(", ") : "Select options"}
-      </div>
-
-      {isOpen && (
-        <div className="absolute z-10 w-full bg-white border border-main2 rounded-md mt-1 shadow-lg">
-          {options.map((option) => (
-            <label
-              key={option}
-              className="px-4 py-2 hover:bg-gray-200 cursor-pointer flex items-center"
-            >
-              <input
-                type="checkbox"
-                className="mr-2"
-                checked={selectedOptions.includes(option)}
-                onChange={() => toggleOption(option)}
-              />
-              {option}
-            </label>
-          ))}
-        </div>
-      )}
     </div>
   );
 };

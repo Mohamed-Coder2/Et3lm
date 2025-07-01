@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/teacherBar";
 import back from '../../../../assets/back.svg';
-import { useState } from "react";
-import pfp from '../../../../assets/noel.jpg'
+import { useEffect, useRef, useState } from 'react';
+import { useUser } from "../../../../userContext";
+import { toast } from 'react-hot-toast';
 
 import {
   StreamTab,
@@ -11,17 +12,13 @@ import {
   StudentsTab
 } from './classworkTabs';
 
-const user = {
-  name: "Noel",
-  role: "System Admin",
-  profilePicture: pfp,
-};
-
 const ClassWorkEdit = () => {
   const { state } = useLocation();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Stream");
   const subjectData = state?.subjectData;
+
+  const { user, loading } = useUser();
 
   // Tab component mapping
   const tabComponents = {
@@ -33,6 +30,25 @@ const ClassWorkEdit = () => {
 
   // Get current tab component
   const CurrentTab = tabComponents[activeTab];
+  const toastId = useRef(null);
+
+  useEffect(() => {
+    if (loading && !toastId.current) {
+      toastId.current = toast.loading("Loading user...");
+    }
+
+    if (!loading && toastId.current) {
+      toast.dismiss(toastId.current);
+      toastId.current = null;
+    }
+  }, [loading]);
+
+  if (loading) return null;
+
+  if (!user) {
+    toast.error("User not found");
+    return null;
+  }
 
   return (
     <div className="w-screen h-screen flex bg-white overflow-hidden">
@@ -50,7 +66,7 @@ const ClassWorkEdit = () => {
                 <p className="text-xl text-main">Back to all subjects</p>
               </button>
               <h1 className="text-3xl text-main ml-1.5">
-                {subjectData.name} - {subjectData.grade}
+                {subjectData.name} - {subjectData.subject_id}
               </h1>
             </div>
 

@@ -1,4 +1,3 @@
-import React from "react";
 
 export const QuizTable = ({ data }) => {
   return (
@@ -6,19 +5,19 @@ export const QuizTable = ({ data }) => {
       <table className="w-full table-auto text-left text-black">
         <thead>
           <tr className="text-main2">
-            <th className="px-4 py-3">Unit</th>
-            <th className="px-4 py-3">Lesson</th>
-            <th className="px-4 py-3">Issues Date</th>
-            <th className="px-4 py-3">Deadline</th>
+            <th className="px-4 py-3">Status</th>
+            <th className="px-4 py-3">Title</th>
+            <th className="px-4 py-3">Issue Date</th>
+            <th className="px-4 py-3">Time</th>
           </tr>
         </thead>
         <tbody className="border-t-2 border-dashed border-gray-500">
           {data.map((row, index) => (
             <tr key={index} className="odd:bg-gray-200">
-              <td className="px-4 py-3">{row.unit}</td>
-              <td className="px-4 py-3">{row.lesson}</td>
+              <td className="px-4 py-3">{row.status}</td>
+              <td className="px-4 py-3">{row.title}</td>
               <td className="px-4 py-3">{row.issueDate}</td>
-              <td className="px-4 py-3">{row.deadline}</td>
+              <td className="px-4 py-3">{row.time}</td>
             </tr>
           ))}
         </tbody>
@@ -33,17 +32,23 @@ export const HWTable = ({ data }) => {
       <table className="w-full table-auto text-left text-black">
         <thead>
           <tr className="text-main2">
-            <th className="px-4 py-3">Level No.</th>
             <th className="px-4 py-3">Title</th>
-            <th className="px-4 py-3">Issues Date</th>
+            <th className="px-4 py-3">Type</th>
+            <th className="px-4 py-3">Difficulty</th>
+            <th className="px-4 py-3">Posted At</th>
           </tr>
         </thead>
         <tbody className="border-t-2 border-dashed border-gray-500">
           {data.map((row, index) => (
             <tr key={index} className="odd:bg-gray-200">
-              <td className="px-4 py-3">{row.lvl}</td>
               <td className="px-4 py-3">{row.title}</td>
-              <td className="px-4 py-3">{row.issueDate}</td>
+              <td className="px-4 py-3">{row.type}</td>
+              <td className="px-4 py-3">{row.difficulty}</td>
+              <td className="px-4 py-3">
+                {row["time-posted"]?.toDate
+                  ? row["time-posted"].toDate().toLocaleString()
+                  : 'N/A'}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -60,17 +65,49 @@ export const StuTable = ({ data }) => {
           <tr className="text-main2">
             <th className="px-4 py-3">ID</th>
             <th className="px-4 py-3">Name</th>
-            <th className="px-4 py-3">Progress</th>
-            <th className="px-4 py-3"></th>
+            <th className="px-4 py-3">Email</th>
+            <th className="px-4 py-3">Class Name</th>
           </tr>
         </thead>
         <tbody className="border-t-2 border-dashed border-gray-500">
           {data.map((row, index) => (
             <tr key={index} className="odd:bg-gray-200">
-              <td className="px-4 py-3">{row.ID}</td>
-              <td className="px-4 py-3">{row.Name}</td>
-              <td className="px-4 py-3">{row.Progress}</td>
-              <td className="px-4 py-3 text-main cursor-pointer hover:underline">See More</td>
+              <td className="px-4 py-3">{row.id}</td>
+              <td className="px-4 py-3">{row.name}</td>
+              <td className="px-4 py-3">{row.email}</td>
+              <td className="px-4 py-3">{row.class?.class_name || 'N/A'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export const TeachersTable = ({ data }) => {
+  return (
+    <div className="bg-gray-300 rounded-xl overflow-hidden w-full max-w-4xl mx-auto">
+      <table className="w-full table-auto text-left text-black">
+        <thead>
+          <tr className="text-main2">
+            <th className="px-4 py-3">Name</th>
+            <th className="px-4 py-3">Email</th>
+            <th className="px-4 py-3">Teacher ID</th>
+          </tr>
+        </thead>
+        <tbody className="border-t-2 border-dashed border-gray-500">
+          {data.map((teacher, index) => (
+            <tr key={index} className="odd:bg-gray-200">
+              <td className="px-4 py-3 flex items-center gap-3">
+                <img
+                  src={teacher.profilePicture || "/default-pfp.png"}
+                  alt="Profile"
+                  className="w-10 h-10 rounded-full object-cover"
+                />
+                <span>{teacher.name}</span>
+              </td>
+              <td className="px-4 py-3">{teacher.email}</td>
+              <td className="px-4 py-3">{teacher.teacher_id || 'N/A'}</td>
             </tr>
           ))}
         </tbody>

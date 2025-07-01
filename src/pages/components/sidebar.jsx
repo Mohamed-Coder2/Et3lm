@@ -8,53 +8,68 @@ import classes from '../../assets/classes.svg';
 import messages from '../../assets/messages.svg';
 import notifications from '../../assets/notifications.svg';
 import profile from '../../assets/profile.svg';
-import pfp from '../../assets/noel.jpg';
+import defaultPfp from '../../assets/default-avatar.png';
+import teachers from '../../assets/teacher.png'
 
-const Sidebar = ({userType}) => {
+const Sidebar = ({ userType }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const type = userType;
 
-  const type = userType
+  // Safely parse stored admin data
+  let parsedAdmin = null;
+  try {
+    const stored = localStorage.getItem('adminData');
+    if (stored) parsedAdmin = JSON.parse(stored);
+
+    // If image is a File object, discard it (not usable in <img src>)
+    if (parsedAdmin && typeof parsedAdmin.image === "object") {
+      parsedAdmin.image = null;
+    }
+  } catch (err) {
+    console.warn("Invalid adminData in localStorage. Resetting...");
+    localStorage.removeItem('adminData');
+    parsedAdmin = null;
+  }
 
   const user = {
-    name: "Noel",
-    role: "System Admin",
-    profilePicture: pfp,
+    name: parsedAdmin ? `${parsedAdmin.firstName} ${parsedAdmin.lastName}` : "Unknown",
+    role: type || "Admin",
+    profilePicture: parsedAdmin?.image
+      ? `${import.meta.env.VITE_BACKEND_URL}/storage/${parsedAdmin.image}`
+      : defaultPfp,
   };
 
-  // Sidebar items with their respective paths (prepended with admin || teacher)
   const sidebarItems = [
     { icon: dashboard, text: "Dashboard", path: `/${type}/dashboard` },
-    { icon: users, text: "Users", path: `/${type}/users` },
+    { icon: users, text: "Students", path: `/${type}/students` },
     { icon: subjects, text: "Subjects", path: `/${type}/subjects` },
+    { icon: teachers, text: "Teachers", path: `/${type}/teacher` },
     { icon: classes, text: "Classes", path: `/${type}/classes` },
     { icon: messages, text: "Messages", path: `/${type}/messages` },
     { icon: notifications, text: "Notifications", path: `/${type}/notifications` },
     { icon: profile, text: "Profile", path: `/${type}/profile` },
   ];
 
-  // Determine the active page based on the current URL
   const activePage = sidebarItems.find((item) =>
-    location.pathname.startsWith(item.path) // Check if the path starts with the item's path
+    location.pathname.startsWith(item.path)
   )?.text || "Dashboard";
 
-  // Handle click on sidebar items
   const handleItemClick = (text, path) => {
-    navigate(path); // Navigate to the respective path
+    navigate(path);
   };
 
   return (
     <div className="h-screen w-1/5 bg-main flex flex-col">
-      {/* Logo and Title Section */}
+      {/* Logo and Title */}
       <div className="flex items-center justify-evenly p-3">
-        <img src={logo} className="w-12 h-12" alt="Logo" />
         <div className="flex flex-col">
-          <p className="text-lg font-bold">E-t3lm</p>
+          <img src={logo} className="w-20 md:w-30 lg:w-40 xl:w-max hover:cursor-pointer" onClick={() => {navigate(`/admin/login`)}} alt="Logo" />
           <p className="text-xs">Learning Management System</p>
         </div>
       </div>
 
-      {/* Sidebar Items */}
+      {/* Sidebar Navigation */}
       <div className="flex flex-col p-4 flex-grow">
         {sidebarItems.map((item, index) => (
           <div
@@ -76,7 +91,7 @@ const Sidebar = ({userType}) => {
         ))}
       </div>
 
-      {/* User Section at the Bottom */}
+      {/* User Info */}
       <div className="flex items-center p-4 border-t border-gray-200">
         <div className="w-12 h-12 rounded-full overflow-hidden mr-4">
           <img
