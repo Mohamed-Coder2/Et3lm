@@ -17,6 +17,7 @@ const AllTeachersPage = () => {
         .then((snapshot) => {
           const data = snapshot.docs.map((doc) => doc.data());
           setTeachers(data);
+          localStorage.setItem("totalTeachers", data.length); // Save to localStorage
         });
 
       toast.promise(promise, {
@@ -35,7 +36,8 @@ const AllTeachersPage = () => {
       <div className="w-4/5 p-8 text-main">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">All Teachers</h1>
-          <button className="bg-main text-white p-2 rounded-md hover:cursor-pointer hover:bg-main2" onClick={() => {navigate('/admin/teacher/create')}}>Add Teacher</button>
+          <button className="bg-main text-white p-2 rounded-md hover:cursor-pointer hover:bg-main2" onClick={() => { navigate('/admin/teacher/create') }}>Add Teacher</button>
+          <button className="bg-main text-white p-2 rounded-md hover:cursor-pointer hover:bg-main2" onClick={() => { navigate('/admin/teacher/assign') }}>Assign Teacher to Subject</button>
         </div>
 
         <TeachersTable data={teachers} />

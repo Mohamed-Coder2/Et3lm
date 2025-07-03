@@ -1,65 +1,61 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../../components/teacherBar";
 import { useNavigate } from "react-router-dom";
-
-const mock_Data = [
-  {
-    id: '1',
-    name: 'English',
-    subject_id: 'EN-212',
-    description: 'English course',
-    logo: 'hehe'
-  }
-]
+import { toast } from "react-hot-toast";
 
 const ClassWork = () => {
-  const [subjects, setSubjects] = useState([]);
+  const [assignments, setAssignments] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchSubjects = async () => {
+    const fetchTeacherAssignments = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/subjects`, {
-          headers: {
-            "Accept": "application/json",
-            "ngrok-skip-browser-warning": "true"
+        // Get teacher data from localStorage
+        const teacherData = JSON.parse(localStorage.getItem("teacherData"));
+        if (!teacherData?.id) {
+          throw new Error("Teacher data not found");
+        }
+
+        // Fetch teacher's assignments
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/class-subjects/teachers/${teacherData.id}/assignments`,
+          {
+            headers: {
+              "Accept": "application/json",
+              "ngrok-skip-browser-warning": "true"
+            }
           }
-        });
+        );
 
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-          const raw = await res.text();
-          throw new Error(`Expected JSON, got:\n${raw}`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch assignments");
         }
 
-        const data = await res.json();
-
-        if (data.success) {
-          const formattedSubjects = data.data.map(subject => ({
-            id: subject.id,
-            name: subject.subject_name,
-            subject_id: subject.subject_id,
-            description: subject.description,
-            logo: subject.image_url
-          }));
-
-          setSubjects(formattedSubjects);
-        }
+        const data = await response.json();
+        setAssignments(data.assignments || []);
 
       } catch (error) {
-        console.error("Failed to fetch subjects:", error);
+        console.error("Failed to fetch assignments:", error);
+        toast.error("Failed to load your assignments");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSubjects();
+    fetchTeacherAssignments();
   }, []);
 
-
-  const handleSubjectClick = (subject) => {
-    navigate(`/teacher/classwork/${subject.id}`, { state: { subjectData: subject } });
+  const handleAssignmentClick = (assignment) => {
+    navigate(`/teacher/classwork/${assignment.subject_id}`, { 
+      state: { 
+        assignmentData: assignment,
+        teacherClasses: assignments.map(a => ({
+          classId: a.class_id,
+          className: a.class_name
+        }))
+      } 
+    });
   };
 
   return (
@@ -68,28 +64,28 @@ const ClassWork = () => {
 
       <div className="w-4/5 flex flex-col items-center">
         <div className="w-full m-4">
-          <h1 className="m-4 p-2 text-3xl text-main">Classwork</h1>
+          <h1 className="m-4 p-2 text-3xl text-main">Classwork Assignments</h1>
         </div>
 
-        <div className="w-full p-4 grid grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 overflow-auto">
+        <div className="w-full p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-auto">
           {loading ? (
-            <p>Loading...</p>
-          ) : (
-            // change mock_Data to subjects
-            subjects.map((subject) => (
+            <p>Loading your assignments...</p>
+          ) : assignments.length > 0 ? (
+            assignments.map((assignment) => (
               <div
-                key={subject.id}
-                onClick={() => handleSubjectClick(subject)}
+                key={`${assignment.class_id}-${assignment.subject_id}`}
+                onClick={() => handleAssignmentClick(assignment)}
                 className="cursor-pointer"
               >
-                <Subj
-                  name={subject.name}
-                  subject_id={subject.subject_id}
-                  description={subject.description}
-                  logo={subject.logo}
+                <AssignmentCard
+                  className={assignment.class_name}
+                  subjectName={assignment.subject_name}
+                  subjectDescription={assignment.subject_description}
                 />
               </div>
             ))
+          ) : (
+            <p>No assignments found</p>
           )}
         </div>
       </div>
@@ -97,24 +93,26 @@ const ClassWork = () => {
   );
 };
 
-const Subj = ({ name, subject_id, description, logo }) => {
+const AssignmentCard = ({ className, subjectName, subjectDescription }) => {
   return (
-    <div className="flex items-center justify-between rounded-lg text-white bg-main2 hover:bg-main">
-      <div className="p-2 flex flex-col justify-evenly h-full">
-        <div className="flex flex-col p-2">
-          <p className="font-bold text-lg">{name}</p>
-          <p className="text-gray-300">{subject_id}</p>
+    <div className="rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="font-bold text-lg text-main">{subjectName}</h3>
+          <p className="text-gray-600 text-sm">{className} Class</p>
         </div>
-        <p className="p-2">{description}</p>
+        <div className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
+          Active
+        </div>
       </div>
-      <img
-        src={logo}
-        className="w-1/2 h-full object-cover"
-        alt={`${name} logo`}
-      />
+      <p className="mt-2 text-gray-700 text-sm">{subjectDescription}</p>
+      <div className="mt-4 flex justify-end">
+        <button className="text-sm text-blue-600 hover:underline">
+          View Details
+        </button>
+      </div>
     </div>
   );
 };
-
 
 export default ClassWork;

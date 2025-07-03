@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { toast } from "react-hot-toast";
 import Sidebar from "../../../components/sidebar";
-import { useLocation, useNavigate } from "react-router-dom";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
+import { useNavigate } from "react-router-dom";
 import back from '../../../../assets/back.svg'
 
 export default function AddStudent() {
@@ -56,6 +58,21 @@ export default function AddStudent() {
 
       if (res.ok && result.success) {
         toast.success("Student added successfully!", { id: toastId });
+        
+        // 🧾 Log to Firestore
+        const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
+        await setDoc(doc(collection(db, "adminLogs")), {
+          action: "add_student",
+          timestamp: serverTimestamp(),
+          performedBy: {
+            email: adminData.email || "unknown",
+            name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
+            image: adminData.image || "",
+          },
+          studentEmail: form.email,
+          studentName: `${form.first_name} ${form.last_name}`.trim(),
+        });
+
         setForm({
           first_name: "",
           last_name: "",

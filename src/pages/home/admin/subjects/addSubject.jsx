@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 
 import Sidebar from "../../../components/sidebar";
 import back from '../../../../assets/back.svg';
@@ -44,6 +46,22 @@ const AddSubject = () => {
 
       toast.success("Subject added successfully", { id: toastId });
       localStorage.removeItem("subjects_cache");
+
+      // 🔒 Log the admin action to Firestore
+      const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
+
+      await setDoc(doc(collection(db, "adminLogs")), {
+        action: "add_subject",
+        timestamp: serverTimestamp(),
+        performedBy: {
+          email: adminData.email || "unknown",
+          name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
+          image: adminData.image || "",
+        },
+        subjectId,
+        subjectName: name,
+      });
+
       navigate("/admin/subjects");
     } catch (err) {
       toast.error(err.message || "Error adding subject", { id: toastId });

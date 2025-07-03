@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import Sidebar from "../../../components/sidebar";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 
@@ -45,7 +47,6 @@ const Subjects = () => {
     }
   };
 
-
   const fetchSubjects = async (forceRefresh = false) => {
     const cacheKey = "subjects_cache";
     const cacheTTL = 60 * 60 * 1000; // 1 hour
@@ -85,6 +86,7 @@ const Subjects = () => {
           // Teachers: []      // replace with subj.teachers if included in API
         }));
         setSubjects(formatted);
+        localStorage.setItem("totalSubjects", formatted.length);
         localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: formatted }));
         toast.success("Subjects loaded successfully", { id: toastId });
       } else {
@@ -129,6 +131,20 @@ const Subjects = () => {
         toast.success("Subject deleted", { id: toastId });
         localStorage.removeItem("subjects_cache");
         fetchSubjects(true);
+
+        // 🔒 Log to Firestore
+        const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
+        await setDoc(doc(collection(db, "adminLogs")), {
+          action: "delete_subject",
+          timestamp: serverTimestamp(),
+          performedBy: {
+            email: adminData.email || "unknown",
+            name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
+            image: adminData.image || "",
+          },
+          subjectId: selectedSubject.Subject_Id,
+          subjectName: selectedSubject.Name,
+        });
       } else {
         const result = await res.json();
         toast.error(result.message || "Failed to delete subject", { id: toastId });

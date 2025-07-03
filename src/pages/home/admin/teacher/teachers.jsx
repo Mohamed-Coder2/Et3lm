@@ -45,7 +45,7 @@ const CreateTeacher = () => {
       );
       const user = userCredential.user;
 
-      // Save to Firestore with auto-generated teacher_id
+      // Save to Firestore
       await setDoc(doc(db, "teachers", user.uid), {
         id: user.uid,
         name: form.name,
@@ -58,6 +58,57 @@ const CreateTeacher = () => {
         subjects: [],
       });
 
+      // ✅ Call backend API to register the teacher
+      const [first_name = "", last_name = ""] = form.name.trim().split(" ");
+
+      // Add debug logging
+      console.log("Attempting to call backend API at:", `${import.meta.env.VITE_BACKEND_URL}/api/teachers`);
+
+      const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/teachers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          // Add authorization if needed
+          // "Authorization": `Bearer ${yourAuthToken}`
+        },
+        body: JSON.stringify({
+          first_name,
+          last_name,
+          email: form.email,
+          password: form.password,
+          // Consider sending the firebase UID for reference
+          firebase_uid: user.uid,
+          teacher_id
+        }),
+      });
+
+      // Check if the response is OK
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("Backend API error:", errorData);
+        throw new Error(`Backend error: ${errorData.message || response.statusText}`);
+      }
+
+      const responseData = await response.json();
+      console.log("Backend API response:", responseData);
+
+      // Parse admin info from localStorage
+      const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
+
+      // Log admin action
+      await setDoc(doc(collection(db, "adminLogs")), {
+        action: "add_teacher",
+        timestamp: serverTimestamp(),
+        performedBy: {
+          email: adminData.email || "unknown",
+          name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
+          image: adminData.image || "",
+        },
+        targetId: teacher_id,
+        targetName: form.name,
+        targetEmail: form.email,
+      });
+
       toast.success("Teacher created successfully!", { id: loadingToast });
 
       setForm({
@@ -67,6 +118,7 @@ const CreateTeacher = () => {
         profilePicture: "",
       });
     } catch (err) {
+      console.error("Full error details:", err);
       toast.error(`Error: ${err.message}`, { id: loadingToast });
     }
   };

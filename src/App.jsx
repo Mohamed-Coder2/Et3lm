@@ -33,6 +33,8 @@ import AddStudent from './pages/home/admin/users/addStudent';
 import Homework from './pages/home/teacher/classwork/addHomework';
 import CreateTeacher from './pages/home/admin/teacher/teachers';
 import AllTeachersPage from './pages/home/admin/teacher/allTeachers';
+import Assign from './pages/home/admin/teacher/assign';
+import AssignSBJ from './pages/home/admin/classes/AssignSBJ';
 
 function App() {
   return (
@@ -48,9 +50,11 @@ function App() {
           <Route path='/admin/students' element={<Users />} />
           <Route path='/admin/subjects' element={<Subjects />} />
           <Route path='/admin/classes' element={<Classes />} />
+          <Route path='/admin/classes/assign' element={<AssignSBJ />} />
 
           <Route path='/admin/teacher' element={<AllTeachersPage />} />
           <Route path='/admin/teacher/create' element={<CreateTeacher />} />
+          <Route path='/admin/teacher/assign' element={<Assign />} />
 
           <Route path='/admin/messages' element={<Messages />} />
           <Route path='/admin/notifications' element={<Notifications />} />

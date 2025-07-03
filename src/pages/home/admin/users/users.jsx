@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../../components/sidebar";
+import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { db } from "../../../../lib/firebase";
 import defaultPfp from '../../../../assets/default-avatar.png';
 import toast from "react-hot-toast";
 
@@ -33,6 +35,19 @@ const Users = () => {
 
       if (res.ok && result.success) {
         toast.success("User deleted successfully.", { id: toastId });
+        // ✅ Log to adminLogs
+        const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
+        await setDoc(doc(collection(db, "adminLogs")), {
+          action: "delete_student",
+          timestamp: serverTimestamp(),
+          performedBy: {
+            email: adminData.email || "unknown",
+            name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
+            image: adminData.image || "",
+          },
+          studentEmail: userToDelete.Email,
+          studentName: `${userToDelete.FirstName} ${userToDelete.LastName}`.trim(),
+        });
         // Remove the deleted user from state
         setStudents((prev) => prev.filter((u) => u.ID !== userToDelete.ID));
       } else {
@@ -91,6 +106,7 @@ const Users = () => {
         }));
 
         setStudents(formatted);
+        localStorage.setItem("totalStudents", formatted.length);
         localStorage.setItem(cacheKey, JSON.stringify({ timestamp: Date.now(), data: formatted }));
         toast.success("Students fetched successfully", { id: toastId });
       } else {
@@ -105,7 +121,6 @@ const Users = () => {
   useEffect(() => {
     fetchStudents();
   }, []);
-
 
   const filteredUsers = students.filter(user =>
     user.FirstName.toLowerCase().includes(searchQuery.toLowerCase()) || user.LastName.toLowerCase().includes(searchQuery.toLowerCase()) ||

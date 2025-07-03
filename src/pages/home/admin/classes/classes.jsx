@@ -46,6 +46,7 @@ const Classes = () => {
       const fetchedClasses = result.data?.classes || [];
 
       setClasses(fetchedClasses);
+      localStorage.setItem("totalClasses", fetchedClasses.length);
       localStorage.setItem(
         CACHE_KEY,
         JSON.stringify({ data: fetchedClasses, timestamp: Date.now() })
@@ -93,6 +94,12 @@ const Classes = () => {
               onClick={handleAddClick}
             >
               Add Class
+            </button>
+                        <button
+              className="bg-main rounded-md text-white p-2 hover:bg-main2 hover:cursor-pointer"
+              onClick={() => navigate('/admin/classes/assign')}
+            >
+              Assign Subject to Class
             </button>
           </div>
         </div>
