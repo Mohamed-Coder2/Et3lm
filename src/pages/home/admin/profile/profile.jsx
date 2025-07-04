@@ -118,7 +118,7 @@ const Profile = () => {
           {["firstName", "lastName", "email", "password", "image"].map((field) => (
             <div
               key={field}
-              className="bg-gray-100 p-6 rounded-lg shadow-md ml-4 mb-4"
+              className="bg-gray-100 p-6 rounded-lg shadow-md ml-4 mb-4 hover:cursor-pointer"
               onClick={() => handleFieldClick(field)}
             >
               <label className="text-main font-semibold block mb-1 capitalize">

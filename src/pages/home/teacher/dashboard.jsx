@@ -4,61 +4,80 @@ import welcome from "../../../assets/Illustration.svg";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../../../lib/firebase";
 import { toast } from "react-hot-toast";
+import { useUser } from "../../../userContext";
 
 const TeacherDashboard = () => {
+  const { user } = useUser();
   const [subjects, setSubjects] = useState([]);
   const [subjectStats, setSubjectStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [activeSubject, setActiveSubject] = useState(null);
 
   const fetchSubjects = async () => {
+    if (!user?.email) return;
+
     try {
-      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/subjects`, {
+      const baseUrl = import.meta.env.VITE_BACKEND_URL;
+
+      // Step 1: Get teacher ID
+      const idRes = await fetch(`${baseUrl}/api/teachers/by-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "ngrok-skip-browser-warning": "true"
+        },
+        body: JSON.stringify({ email: user.email })
+      });
+
+      const idData = await idRes.json();
+      if (!idData.success) throw new Error("Failed to get teacher ID");
+      const teacherId = idData.data.id;
+
+      // Step 2: Get teacher assignments
+      const assignmentRes = await fetch(`${baseUrl}/api/class-subjects/teachers/${teacherId}/assignments`, {
         headers: {
           "Accept": "application/json",
           "ngrok-skip-browser-warning": "true"
         }
       });
 
-      const contentType = res.headers.get("content-type");
-      if (!contentType || !contentType.includes("application/json")) {
-        const raw = await res.text();
-        throw new Error(`Expected JSON, got:\n${raw}`);
+      const assignmentData = await assignmentRes.json();
+      if (!assignmentData.success) throw new Error("Failed to fetch assignments");
+
+      const formattedSubjects = assignmentData.assignments.map(item => ({
+        id: item.subject_code,
+        name: item.subject_name,
+        subject_id: item.subject_id,
+        description: item.subject_description,
+        logo: null // Placeholder, update if you have images
+      }));
+
+      setSubjects(formattedSubjects);
+      if (formattedSubjects.length > 0) {
+        setActiveSubject(formattedSubjects[0].subject_id);
       }
 
-      const data = await res.json();
-      if (data.success) {
-        const formattedSubjects = data.data.map(subject => ({
-          id: subject.id,
-          name: subject.subject_name,
-          subject_id: subject.subject_id,
-          description: subject.description,
-          logo: subject.image_url
-        }));
-        setSubjects(formattedSubjects);
-        if (formattedSubjects.length > 0) {
-          setActiveSubject(formattedSubjects[0].subject_id);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to fetch subjects:", error);
-      }
+    } catch (err) {
+      console.error("Subject fetching error:", err);
+      toast.error("Failed to load teacher subjects.");
+    }
   };
 
   useEffect(() => {
     fetchSubjects();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (subjects.length === 0) return;
 
-    const loadStatsForSubjects = async () => {
+    const loadStats = async () => {
       const loadingToast = toast.loading("Loading dashboard data...");
       const allStats = {};
 
       try {
         for (const subject of subjects) {
           const { subject_id } = subject;
+
           // Homeworks
           const hwSnap = await getDocs(collection(db, "homeworks", subject_id, "homeworks"));
           const hwIds = hwSnap.docs.map(doc => doc.id);
@@ -122,7 +141,7 @@ const TeacherDashboard = () => {
                   name,
                   avg: (data.total / data.count).toFixed(2)
                 };
-              } catch (err) {
+              } catch {
                 return { name: "Unknown", avg: (data.total / data.count).toFixed(2) };
               }
             })
@@ -149,12 +168,10 @@ const TeacherDashboard = () => {
       }
     };
 
-    loadStatsForSubjects();
+    loadStats();
   }, [subjects]);
 
-  const handleSubjectChange = (subjectId) => {
-    setActiveSubject(subjectId);
-  };
+  const handleSubjectChange = (subjectId) => setActiveSubject(subjectId);
 
   const AnalyticsCard = ({ label, count }) => (
     <div className="bg-white border shadow rounded-md p-4 text-center">
@@ -165,13 +182,13 @@ const TeacherDashboard = () => {
 
   return (
     <div className="h-screen flex bg-white">
-      <Sidebar userType={"teacher"} />
+      <Sidebar userType="teacher" />
       <div className="flex-1 flex flex-col p-6 mt-20 overflow-auto">
-        {/* Welcome Banner */}
+        {/* Banner */}
         <div className="flex items-center justify-between bg-gray-200 rounded-lg h-40 px-6 mb-6">
           <div className="flex flex-col justify-center">
-            <p className="text-3xl font-semibold">Hello Teacher</p>
-            <p className="text-gray-600">Here's a summary of your classes!</p>
+            <p className="text-3xl font-semibold text-blk">Hello Teacher</p>
+            <p className="text-gray-600">Here's a summary of your assigned classes!</p>
           </div>
           <img src={welcome} alt="Welcome" className="h-32 w-auto" />
         </div>
@@ -184,8 +201,8 @@ const TeacherDashboard = () => {
               onClick={() => handleSubjectChange(subject.subject_id)}
               className={`px-4 py-2 rounded-lg whitespace-nowrap ${
                 activeSubject === subject.subject_id
-                  ? 'bg-main text-white hover:cursor-pointer'
-                  : 'bg-gray-100 hover:bg-gray-200 text-blk hover:cursor-pointer'
+                  ? 'bg-main text-white'
+                  : 'bg-gray-100 hover:bg-gray-200 text-blk'
               }`}
             >
               {subject.name}
@@ -193,7 +210,7 @@ const TeacherDashboard = () => {
           ))}
         </div>
 
-        {/* Subject Dashboard */}
+        {/* Dashboard Panel */}
         {loading ? (
           <p className="text-gray-500 text-center mt-8">Loading dashboard...</p>
         ) : activeSubject && subjects.length > 0 ? (
@@ -201,7 +218,6 @@ const TeacherDashboard = () => {
             {(() => {
               const subject = subjects.find(s => s.subject_id === activeSubject);
               const stats = subjectStats[activeSubject];
-              
               if (!subject || !stats) return null;
 
               return (
@@ -211,9 +227,6 @@ const TeacherDashboard = () => {
                       <h2 className="text-2xl font-semibold text-main2">{subject.name}</h2>
                       <p className="text-sm text-gray-500">{subject.description}</p>
                     </div>
-                    {subject.logo && (
-                      <img src={subject.logo} alt={subject.name} className="h-12 w-12" />
-                    )}
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -243,7 +256,7 @@ const TeacherDashboard = () => {
             })()}
           </div>
         ) : (
-          <p className="text-gray-500 text-center mt-8">No subjects available.</p>
+          <p className="text-gray-500 text-center mt-8">No assigned subjects found.</p>
         )}
       </div>
     </div>

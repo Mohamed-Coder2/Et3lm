@@ -38,14 +38,14 @@ const Dashboard = () => {
   }, []);
 
   return (
-    <div className="h-screen flex bg-white">
+    <div className="h-screen flex bg-white overflow-hidden">
       <Sidebar userType="admin" />
 
-      <div className="flex flex-col gap-6 p-6 w-3/5 mt-20 ml-8">
+      <div className="flex flex-col gap-6 p-6 mt-20 ml-8 w-3/4 overflow-hidden">
         {/* Header Section */}
         <div className="flex items-center justify-between bg-gray-200 rounded-lg h-40 px-6">
           <div className="flex flex-col justify-center">
-            <p className="text-3xl font-semibold">Hello Admin</p>
+            <p className="text-3xl font-semibold text-blk">Hello Admin</p>
             <p className="text-gray-600">It's good to see you again!</p>
           </div>
           <img src={welcome} alt="Welcome" className="h-32 w-auto" />
@@ -60,9 +60,9 @@ const Dashboard = () => {
         </div>
 
         {/* Admin Logs Console */}
-        <div className="mt-8">
+        <div className="flex flex-col flex-grow overflow-hidden mt-4">
           <p className="text-lg font-semibold mb-2">Admin Logs</p>
-          <div className="bg-black/90 text-green-400 font-mono p-4 rounded-md h-64 overflow-y-scroll text-sm border border-gray-600">
+          <div className="bg-black/90 text-green-400 font-mono p-4 rounded-md overflow-auto text-sm border border-gray-600 flex-grow">
             {logs.length === 0 ? (
               <p className="text-gray-400">No logs available.</p>
             ) : (
@@ -74,7 +74,6 @@ const Dashboard = () => {
                     ({log.performedBy?.email || "N/A"}) ➜ <strong className="text-white">{log.action}</strong>
                   </p>
 
-                  {/* Optional: Show metadata for student/subject if available */}
                   {log.studentName && (
                     <p className="ml-4">Deleted student: <span className="text-white">{log.studentName}</span></p>
                   )}

@@ -16,9 +16,6 @@ export const StreamTab = ({ subjectData, user }) => {
   const [comments, setComments] = useState({});
   const [loadingComments, setLoadingComments] = useState({});
 
-  console.log(subjectData)
-  console.log(user)
-
   // Fetch announcements
   useEffect(() => {
     const q = query(
@@ -538,12 +535,21 @@ export const QuizzesTab = ({ subjectData }) => {
   );
 };
 
-export const StudentsTab = () => {
+export const StudentsTab = ({ subjectData }) => {
   const [students, setStudents] = useState([]);
 
   useEffect(() => {
     const fetchStudents = async () => {
-      const fetchPromise = fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students`, {
+      const className = subjectData?.class_name;
+
+      if (!className) {
+        console.warn("Class name not provided in subjectData.");
+        return;
+      }
+
+      const url = `${import.meta.env.VITE_BACKEND_URL}/api/students/class/name/${className}`;
+
+      const fetchPromise = fetch(url, {
         headers: {
           "Accept": "application/json",
           "ngrok-skip-browser-warning": "true"
@@ -559,6 +565,7 @@ export const StudentsTab = () => {
       try {
         const res = await fetchPromise;
         const contentType = res.headers.get("content-type");
+
         if (!contentType || !contentType.includes("application/json")) {
           const raw = await res.text();
           throw new Error(`Expected JSON, got:\n${raw}`);
@@ -586,10 +593,9 @@ export const StudentsTab = () => {
     };
 
     fetchStudents();
-  }, []);
+  }, [subjectData]);
 
   return (
-
     <>
       <Toaster position="top-right" />
       <div className="p-4 flex flex-col w-full items-center justify-center">
@@ -605,6 +611,7 @@ export const StudentsTab = () => {
     </>
   );
 };
+
 
 const CLOUDINARY_UPLOAD_URL = 'https://api.cloudinary.com/v1_1/da3ha0efp/auto/upload';
 const UPLOAD_PRESET = 'unsigned_preset';
@@ -813,9 +820,8 @@ export const MaterialTab = ({ subjectData }) => {
         <button
           onClick={handleSubmit}
           disabled={uploading}
-          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
-            uploading ? 'opacity-70 cursor-not-allowed' : ''
-          }`}
+          className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${uploading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
         >
           {uploading ? (
             <>
@@ -833,9 +839,119 @@ export const MaterialTab = ({ subjectData }) => {
 };
 
 export const SchedulesTab = ({ subjectData }) => {
-  return(
-    <div>
-      <h1>Schedules for {subjectData.subject_id}</h1>
+  const [schedule, setSchedule] = useState({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSchedule = async () => {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL}/api/schedules/class/${subjectData.class_id}`,
+          {
+            headers: {
+              "Accept": "application/json",
+              "ngrok-skip-browser-warning": "true"
+            }
+          }
+        );
+        const data = await response.json();
+        if (!data.success) throw new Error("Failed to fetch schedule");
+        setSchedule(data.data.schedule);
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to load class schedule");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSchedule();
+  }, [subjectData.class_id]);
+
+  const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"];
+  const timeSlots = ["09:00", "10:00", "11:00", "11:35", "12:35"];
+
+  const isScheduleEmpty = Object.values(schedule).every(
+    (dayArray) => !Array.isArray(dayArray) || dayArray.length === 0
+  );
+
+  return (
+    <div className="p-4 w-full overflow-x-auto">
+      <h1 className="text-2xl font-bold text-main mb-4">
+        Schedule for {subjectData.class_name || subjectData.subject_id}
+      </h1>
+
+      {loading ? (
+        <p>Loading schedule...</p>
+      ) : isScheduleEmpty ? (
+        <div className="text-center text-gray-500 bg-gray-100 p-6 rounded-lg shadow">
+          <p>No schedule has been assigned to this class yet.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-6 border border-gray-300">
+          {/* Header Row */}
+          <div className="bg-gray-100 font-semibold p-2 border-r border-b border-gray-300">
+            Day / Time
+          </div>
+          {timeSlots.map((time, idx) => (
+            <div
+              key={idx}
+              className="bg-gray-100 font-semibold p-2 text-center border-r border-b border-gray-300"
+            >
+              {time}
+            </div>
+          ))}
+
+          {/* Rows for each day */}
+          {daysOfWeek.map((day) => (
+            <React.Fragment key={day}>
+              <div className="bg-gray-50 font-medium p-2 border-r border-b border-gray-300">
+                {day}
+              </div>
+              {timeSlots.map((slotStart, i) => {
+                const slot = (schedule[day] || []).find(
+                  (s) => s.start_time === slotStart
+                );
+
+                if (slot) {
+                  return (
+                    <div
+                      key={i}
+                      className={`p-2 text-sm border-r border-b border-gray-300 ${slot.is_break
+                          ? "bg-yellow-100 text-yellow-800"
+                          : "bg-blue-50 text-blue-900"
+                        }`}
+                    >
+                      {slot.is_break ? (
+                        <span>Break</span>
+                      ) : (
+                        <>
+                          <div className="font-semibold">
+                            {slot.subject?.subject_name}
+                          </div>
+                          <div className="text-xs italic">
+                            {slot.teacher?.first_name} {slot.teacher?.last_name}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                } else {
+                  return (
+                    <div
+                      key={i}
+                      className="p-2 text-sm text-gray-400 border-r border-b border-gray-300"
+                    >
+                      -
+                    </div>
+                  );
+                }
+              })}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
+

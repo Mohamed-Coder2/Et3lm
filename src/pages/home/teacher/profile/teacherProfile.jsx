@@ -23,8 +23,36 @@ const TeacherProfile = () => {
   const handleSave = async () => {
     const savingToast = toast.loading("Saving changes...");
     try {
+      // Step 1: Update Firestore
       const docRef = doc(db, "teachers", user.id);
       await updateDoc(docRef, formData);
+
+      // Step 2: Get backend teacher ID by email
+      const backendBase = import.meta.env.VITE_BACKEND_URL;
+      const res = await fetch(`${backendBase}/api/teachers/by-email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      });
+
+      const result = await res.json();
+      if (!result.success) throw new Error("Failed to fetch teacher ID from backend");
+
+      const teacherId = result.data.id;
+
+      // Step 3: Prepare backend update payload (exclude image)
+      const [first_name = "", last_name = ""] = (formData.name || "").split(" ");
+      const updateForm = new FormData();
+      if (first_name) updateForm.append("first_name", first_name);
+      if (last_name) updateForm.append("last_name", last_name);
+      if (formData.email) updateForm.append("email", formData.email);
+
+      // Step 4: Send update to backend
+      await fetch(`${backendBase}/api/teachers/${teacherId}`, {
+        method: "POST",
+        body: updateForm,
+      });
+
       toast.success("Profile updated successfully!", { id: savingToast });
       setEditing(false);
     } catch (err) {

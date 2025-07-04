@@ -62,7 +62,7 @@ const ClassWork = () => {
     <div className="w-screen h-screen flex bg-white overflow-hidden">
       <Sidebar userType={"teacher"} />
 
-      <div className="w-4/5 flex flex-col items-center">
+      <div className="w-4/5 flex flex-col items-center text-blk">
         <div className="w-full m-4">
           <h1 className="m-4 p-2 text-3xl text-main">Classwork Assignments</h1>
         </div>

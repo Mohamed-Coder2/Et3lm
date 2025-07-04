@@ -132,8 +132,6 @@ const Classes = () => {
                   <th className="py-2 px-4 border-b">ID</th>
                   <th className="py-2 px-4 border-b">Name</th>
                   <th className="py-2 px-4 border-b">Students</th>
-                  <th className="py-2 px-4 border-b">Teachers</th>
-                  <th className="py-2 px-4 border-b">Subjects</th>
                   <th className="py-2 px-4 border-b">Actions</th>
                 </tr>
               </thead>
@@ -144,12 +142,6 @@ const Classes = () => {
                     <td className="py-2 px-4 border-b">{cls.class_name}</td>
                     <td className="py-2 px-4 border-b">
                       {cls.numberOfStudents ?? 0}
-                    </td>
-                    <td className="py-2 px-4 border-b text-gray-400 italic">
-                      Not loaded
-                    </td>
-                    <td className="py-2 px-4 border-b text-gray-400 italic">
-                      Not loaded
                     </td>
                     <td className="py-2 px-4 border-b">
                       <button

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import Sidebar from "../../../components/sidebar";
 import { collection, doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { db } from "../../../../lib/firebase";
 import { useNavigate } from "react-router-dom";
 import back from '../../../../assets/back.svg'
@@ -40,12 +41,18 @@ export default function AddStudent() {
       return;
     }
 
-    const formData = new FormData();
-    Object.entries(form).forEach(([key, value]) => {
-      if (value) formData.append(key, value);
-    });
-
     try {
+      // 1. Create user in Firebase Auth
+      const auth = getAuth();
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+      const { uid } = userCredential.user;
+
+      // 2. Send student data to your backend (for database, etc.)
+      const formData = new FormData();
+      Object.entries(form).forEach(([key, value]) => {
+        if (value) formData.append(key, value);
+      });
+
       const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/students`, {
         method: "POST",
         headers: {
@@ -56,44 +63,53 @@ export default function AddStudent() {
 
       const result = await res.json();
 
-      if (res.ok && result.success) {
-        toast.success("Student added successfully!", { id: toastId });
-        
-        // 🧾 Log to Firestore
-        const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
-        await setDoc(doc(collection(db, "adminLogs")), {
-          action: "add_student",
-          timestamp: serverTimestamp(),
-          performedBy: {
-            email: adminData.email || "unknown",
-            name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
-            image: adminData.image || "",
-          },
-          studentEmail: form.email,
-          studentName: `${form.first_name} ${form.last_name}`.trim(),
-        });
-
-        setForm({
-          first_name: "",
-          last_name: "",
-          email: "",
-          password: "",
-          image: null,
-        });
-        setPreview(null);
-      } else {
-        toast.error(result.message || "Failed to add student", { id: toastId });
+      if (!res.ok || !result.success) {
+        toast.error(result.message || "Failed to add student in backend", { id: toastId });
+        return;
       }
+
+      // 2. Add student to Firestore 'students' collection
+      await setDoc(doc(db, "students", uid), {
+        name: `${form.first_name} ${form.last_name}`.trim(),
+        email: form.email,
+        "profile-picture": preview || "", // Optional, replace with actual image URL if needed
+      });
+
+      // 3. Log action to adminLogs
+      const adminData = JSON.parse(localStorage.getItem("adminData") || "{}");
+      await setDoc(doc(collection(db, "adminLogs")), {
+        action: "add_student",
+        timestamp: serverTimestamp(),
+        performedBy: {
+          email: adminData.email || "unknown",
+          name: `${adminData.firstName || ""} ${adminData.lastName || ""}`.trim(),
+          image: adminData.image || "",
+        },
+        studentEmail: form.email,
+        studentName: `${form.first_name} ${form.last_name}`.trim(),
+      });
+
+      toast.success("Student added successfully!", { id: toastId });
+
+      setForm({
+        first_name: "",
+        last_name: "",
+        email: "",
+        password: "",
+        image: null,
+      });
+      setPreview(null);
     } catch (err) {
-      toast.error("An error occurred while adding the student", { id: toastId });
+      console.error(err);
+      toast.error(err.message || "An error occurred while adding the student", { id: toastId });
     }
   };
 
   return (
     <div className="flex w-full bg-white">
-      <Sidebar />
+      <Sidebar userType='admin' />
 
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-3/4">
         <button
           className="w-60 hover:cursor-pointer flex items-center justify-between p-2 hover:underline"
           onClick={() => navigate("/admin/students")} // Navigate back to the users page

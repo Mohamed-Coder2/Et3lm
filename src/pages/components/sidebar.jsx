@@ -5,11 +5,11 @@ import dashboard from '../../assets/dashboard_icon.svg';
 import users from '../../assets/users.svg';
 import subjects from '../../assets/subjects.svg';
 import classes from '../../assets/classes.svg';
-import messages from '../../assets/messages.svg';
-import notifications from '../../assets/notifications.svg';
 import profile from '../../assets/profile.svg';
 import defaultPfp from '../../assets/default-avatar.png';
-import teachers from '../../assets/teacher.png'
+import teachers from '../../assets/teacher.png';
+import calendarr from '../../assets/calendar.svg';
+import parent from '../../assets/parent.svg';
 
 const Sidebar = ({ userType }) => {
   const navigate = useNavigate();
@@ -43,11 +43,11 @@ const Sidebar = ({ userType }) => {
   const sidebarItems = [
     { icon: dashboard, text: "Dashboard", path: `/${type}/dashboard` },
     { icon: users, text: "Students", path: `/${type}/students` },
-    { icon: subjects, text: "Subjects", path: `/${type}/subjects` },
     { icon: teachers, text: "Teachers", path: `/${type}/teacher` },
+    { icon: parent, text: "Parents", path: `/${type}/parents` },
+    { icon: subjects, text: "Subjects", path: `/${type}/subjects` },
     { icon: classes, text: "Classes", path: `/${type}/classes` },
-    { icon: messages, text: "Messages", path: `/${type}/messages` },
-    { icon: notifications, text: "Notifications", path: `/${type}/notifications` },
+    { icon: calendarr, text: "Schedule", path: `/${type}/schedule` },
     { icon: profile, text: "Profile", path: `/${type}/profile` },
   ];
 

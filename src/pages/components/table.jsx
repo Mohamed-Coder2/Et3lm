@@ -1,4 +1,3 @@
-
 export const QuizTable = ({ data, onViewGrades }) => {
   return (
     <div className="bg-gray-300 rounded-xl overflow-hidden w-full max-w-4xl mx-auto">
