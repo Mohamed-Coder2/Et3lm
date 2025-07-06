@@ -4,7 +4,7 @@ import axios from "axios";
 import toast from "react-hot-toast";
 
 const daysOfWeek = [
-  "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"
+  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday"
 ];
 
 const generateTimeSlots = () => {

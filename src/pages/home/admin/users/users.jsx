@@ -24,24 +24,53 @@ const Users = () => {
     const toastId = toast.loading("Loading students...");
     try {
       const snapshot = await getDocs(collection(db, "students"));
-      const formatted = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          ID: doc.id,
-          firebase_uid: doc.id,
-          Pfp: data["profile-picture"] || defaultPfp,
-          name: data.name || "N/A",
-          email: data.email || "unknown",
-          Role: "Student",
-          ClassID: data["class-id"] || "Unassigned",
-          ClassName: data.class_name || "N/A",
-        };
-      });
+      const studentsRaw = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      // Cache for class info to avoid duplicate fetches
+      const classCache = {};
+
+      const fetchClassInfo = async (classId) => {
+        if (!classId) return { class_name: "Unassigned" };
+        if (classCache[classId]) return classCache[classId];
+
+        try {
+          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/classes/${classId}`);
+          const json = await res.json();
+          if (json.success) {
+            classCache[classId] = json.data.class;
+            return json.data.class;
+          } else {
+            return { class_name: "Unknown" };
+          }
+        } catch (err) {
+          console.error("Error fetching class info:", err);
+          return { class_name: "Error" };
+        }
+      };
+
+      const formatted = await Promise.all(
+        studentsRaw.map(async (student) => {
+          const classInfo = await fetchClassInfo(student["class-id"]);
+          return {
+            ID: student.id,
+            firebase_uid: student.id,
+            Pfp: student["profile-picture"] || defaultPfp,
+            name: student.name || "N/A",
+            email: student.email || "unknown",
+            Role: "Student",
+            ClassID: student["class-id"] || "Unassigned",
+            ClassName: classInfo.class_name || "N/A",
+          };
+        })
+      );
 
       setStudents(formatted);
       toast.success("Students fetched", { id: toastId });
     } catch (error) {
-      console.error("Error fetching Firestore students:", error);
+      console.error("Error fetching students or class info:", error);
       toast.error("Failed to fetch students", { id: toastId });
     }
   };
